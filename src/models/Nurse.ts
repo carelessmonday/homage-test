@@ -1,19 +1,19 @@
 import {
   Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable,
 } from 'typeorm';
-import Nurse from './Nurse';
+import Clinic from './Clinic';
 
-@Entity('clinics')
-export default class Clinic {
+@Entity('nurses')
+export default class Nurse {
   @PrimaryGeneratedColumn()
     id: number;
 
   @Column('text')
     name: string;
 
-  @ManyToMany(() => Nurse)
+  @ManyToMany(() => Clinic)
   @JoinTable({
     name: 'schedules',
   })
-    nurses: Nurse[];
+    clinics: Clinic[];
 }
