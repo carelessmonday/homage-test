@@ -32,4 +32,4 @@ Thumbs.db
 dist/**/*
 
 # Data Store
-data/database.db3
+data/*.db3
