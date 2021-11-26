@@ -13,12 +13,6 @@ logs
 results
 tmp
 
-# Build
-public/css/main.css
-
-# Coverage reports
-coverage
-
 # API keys and secrets
 .env
 
@@ -36,3 +30,6 @@ Thumbs.db
 
 # Ignore built ts files
 dist/**/*
+
+# Data Store
+data/database.db3
