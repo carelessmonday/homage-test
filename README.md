@@ -1,1 +1,4 @@
-# Homage Test
+# Homage Test Exercise
+## TODO:
+- Auth middleware
+- Validation middleware
