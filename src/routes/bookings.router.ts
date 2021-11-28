@@ -10,6 +10,6 @@ const bookingsRouter = express.Router();
 bookingsRouter.get('/:userId', index);
 bookingsRouter.post('/:userId', store);
 bookingsRouter.post('/update/:userId/:bookingId', update);
-bookingsRouter.delete('/update/:userId/:bookingId', destroy);
+bookingsRouter.delete('/:userId/:bookingId', destroy);
 
 export default bookingsRouter;

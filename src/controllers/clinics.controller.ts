@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createConnection, Between } from 'typeorm';
+import { createConnection, Connection } from 'typeorm';
 import moment from 'moment';
 import { groupBy, map } from 'lodash';
 import dbOptions from '../db.options';
@@ -8,15 +8,16 @@ import Nurse from '../models/Nurse';
 import Schedule from '../models/Schedule';
 import Booking from '../models/Booking';
 import User from '../models/User';
+import { getBookingsForDate, getAvailableSlotCount } from '../services/bookings.service';
 
-const patientsPerNurse = 10;
+const dbConnection = async (): Promise<Connection> => createConnection({
+  ...dbOptions,
+  entities: [Clinic, Nurse, Schedule, Booking, User],
+});
 
 // TODO: Refactor to Transformer pattern
 export const index = async (req: Request, res: Response) => {
-  const db = await createConnection({
-    ...dbOptions,
-    entities: [Clinic, Nurse, Schedule, Booking, User],
-  });
+  const db = await dbConnection();
 
   try {
     const dateQuery = req.query.date?.toString() ?? (new Date()).toDateString();
@@ -31,22 +32,12 @@ export const index = async (req: Request, res: Response) => {
 
     // Get all bookings for date
     const bookingsRepo = db.getRepository(Booking);
-    const bookings = await bookingsRepo.find({
-      where: {
-        bookingDate: Between(
-          moment(dateQuery).startOf('day').format('Y-MM-DD HH:mm:ss'),
-          moment(dateQuery).endOf('day').format('Y-MM-DD HH:mm:ss'),
-        ),
-      },
-    });
+    const bookings = await getBookingsForDate(bookingsRepo, dateQuery);
 
     const data = map(groupBy(schedule, 'clinicsId'), (sched) => ({
       clinic_id: sched[0].clinics.id,
       clinic_name: sched[0].clinics.name,
-      // Compute available slots
-      // TODO: Refactor to a utitily for easier unit test
-      slots: sched.length * patientsPerNurse - bookings
-        .filter((booking) => booking.clinicsId === sched[0].clinics.id).length,
+      slots: getAvailableSlotCount(sched.length, sched[0].clinics.id, bookings),
     }));
 
     res.status(200).json(data);
@@ -58,10 +49,7 @@ export const index = async (req: Request, res: Response) => {
 };
 
 export const show = async (req: Request, res: Response) => {
-  const db = await createConnection({
-    ...dbOptions,
-    entities: [Clinic, Nurse, Schedule, Booking, User],
-  });
+  const db = await dbConnection();
 
   try {
     const id: number = parseInt(req.params.id, 10);
@@ -76,23 +64,12 @@ export const show = async (req: Request, res: Response) => {
 
     // Get all bookings for date
     const bookingsRepo = db.getRepository(Booking);
-    const bookings = await bookingsRepo.find({
-      where: {
-        clinicsId: clinic.id,
-        bookingDate: Between(
-          moment(dateQuery).startOf('day').format('Y-MM-DD HH:mm:ss'),
-          moment(dateQuery).endOf('day').format('Y-MM-DD HH:mm:ss'),
-        ),
-      },
-    });
+    const bookings = await getBookingsForDate(bookingsRepo, dateQuery);
 
     res.status(200).json({
       clinic_id: clinic.id,
       clinic_name: clinic.name,
-      // Compute available slots
-      // TODO: Refactor to a utitily for easier unit test
-      slots: schedule.length * patientsPerNurse - bookings
-        .filter((booking) => booking.clinicsId === clinic.id).length,
+      slots: getAvailableSlotCount(schedule.length, clinic.id, bookings),
     });
   } catch (e) {
     res.status(500).send(e.message);
