@@ -7,6 +7,7 @@ import Clinic from '../models/Clinic';
 import Nurse from '../models/Nurse';
 import Schedule from '../models/Schedule';
 import Booking from '../models/Booking';
+import User from '../models/User';
 
 const patientsPerNurse = 10;
 
@@ -14,17 +15,21 @@ const patientsPerNurse = 10;
 export const index = async (req: Request, res: Response) => {
   const db = await createConnection({
     ...dbOptions,
-    entities: [Clinic, Nurse, Schedule, Booking],
+    entities: [Clinic, Nurse, Schedule, Booking, User],
   });
 
   try {
     const dateQuery = req.query.date?.toString() ?? (new Date()).toDateString();
     const date = moment(dateQuery).format('Y-MM-DD');
+
+    // Get availabe nurse schedule for date
     const scheduleRepo = db.getRepository(Schedule);
     const schedule = await scheduleRepo.find({
       where: { date },
       relations: ['clinics'],
     });
+
+    // Get all bookings for date
     const bookingsRepo = db.getRepository(Booking);
     const bookings = await bookingsRepo.find({
       where: {
@@ -38,6 +43,8 @@ export const index = async (req: Request, res: Response) => {
     const data = map(groupBy(schedule, 'clinicsId'), (sched) => ({
       clinic_id: sched[0].clinics.id,
       clinic_name: sched[0].clinics.name,
+      // Compute available slots
+      // TODO: Refactor to a utitily for easier unit test
       slots: sched.length * patientsPerNurse - bookings
         .filter((booking) => booking.clinicsId === sched[0].clinics.id).length,
     }));
@@ -53,7 +60,7 @@ export const index = async (req: Request, res: Response) => {
 export const show = async (req: Request, res: Response) => {
   const db = await createConnection({
     ...dbOptions,
-    entities: [Clinic, Nurse, Schedule, Booking],
+    entities: [Clinic, Nurse, Schedule, Booking, User],
   });
 
   try {
@@ -66,6 +73,8 @@ export const show = async (req: Request, res: Response) => {
     const schedule = await scheduleRepo.find({
       where: { date, clinicsId: clinic.id },
     });
+
+    // Get all bookings for date
     const bookingsRepo = db.getRepository(Booking);
     const bookings = await bookingsRepo.find({
       where: {
@@ -80,6 +89,8 @@ export const show = async (req: Request, res: Response) => {
     res.status(200).json({
       clinic_id: clinic.id,
       clinic_name: clinic.name,
+      // Compute available slots
+      // TODO: Refactor to a utitily for easier unit test
       slots: schedule.length * patientsPerNurse - bookings
         .filter((booking) => booking.clinicsId === clinic.id).length,
     });
