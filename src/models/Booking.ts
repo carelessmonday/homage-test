@@ -1,9 +1,10 @@
 import {
-  Entity, Column, PrimaryGeneratedColumn,
+  Entity, Column, PrimaryGeneratedColumn, ManyToOne,
 } from 'typeorm';
+import User from './User';
 
-@Entity('schedules')
-export default class Schedule {
+@Entity('bookings')
+export default class Booking {
   @PrimaryGeneratedColumn()
     id: number;
 
@@ -21,4 +22,7 @@ export default class Schedule {
 
   @Column('date')
     createdAt: string;
+
+  @ManyToOne(() => User, (user) => user.bookings)
+    users: User;
 }

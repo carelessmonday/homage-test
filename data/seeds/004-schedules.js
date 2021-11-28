@@ -6,10 +6,10 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-const scheduleDates = [moment().format('Y-M-D')];
+const scheduleDates = [moment().format('Y-MM-DD')];
 
 for (let i = 1; i <= 18; i += 1) {
-  scheduleDates.push(moment().add(i, 'day').format('Y-M-D'));
+  scheduleDates.push(moment().add(i, 'day').format('Y-MM-DD'));
 }
 
 const schedules = [];

@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import helmet from 'helmet';
 import clinicsRouter from './routes/clinics.router';
+import bookingsRouter from './routes/bookings.router';
 
 if (!process.env.SESSION_SECRET) {
   process.exit(1);
@@ -39,11 +40,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
   res.status(200).json({
-    status: 'Ready to build something awesome?',
+    status: '\'sup?',
   });
 });
 
 app.use('/api/clinics', clinicsRouter);
+app.use('/api/bookings', bookingsRouter);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`App running at http://localhost:${port}`));
